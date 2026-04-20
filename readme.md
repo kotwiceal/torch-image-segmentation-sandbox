@@ -33,6 +33,54 @@ pg.save(f'data/{label}.npz')
 ```
 ![example_p2_2d](/plots/example_p2_2d.gif)
 
+#### `scripts.FieldGravity`
+
+It is consider field-particle interaction governed by classical scalar field evolution equation: 
+
+$$\frac{\partial^2 \varphi}{\partial t^2}-c^2\Delta \varphi=a\rho(t,\mathbf{r})$$
+
+where $\varphi(t,\mathbf{r})$ - scalar potential of gravity field, $c$ - speed of field spreading, $a$ - arbitrary constant of source term, $\rho(t,\mathbf{r})$ - test particle density. 
+
+Initial condition:
+
+$$\varphi(0,\mathbf{r})=0 \quad \frac{\partial \varphi(0,\mathbf{r})}{\partial t}=0$$
+
+Boundary condition:
+
+$$\varphi(t,\mathbf{r}\in \partial \Omega)=0$$
+
+Example:
+```python
+import numpy as np
+from scripts.tools import ParticleGravity, FieldGravity, interpolate
+# define problem
+label = 'example_fg_p2_d2'
+n = np.array([100,100])
+x = np.array(np.meshgrid(*tuple(np.linspace(-1,1,i) for i in n),indexing='ij'))
+t = pg.t
+u0 = np.zeros(n)
+du = np.zeros(n)
+D = np.zeros(n)
+k = 0.1
+F = np.zeros(n)
+G = np.zeros(n)
+H = np.zeros(np.append(n.shape[0],n))
+# create source term
+f = interpolate(pg.x[:-1],x,2,1e-3)
+s = tuple(None for _ in range(n.shape[0])) + (np.s_[:],)
+f = -1e5*np.sum(f,axis=-1)
+f = np.moveaxis(f,(-1),(0))
+F = f
+# solve problem
+fg = FieldGravity()
+fg.initialize(u0,du,t[:2],k,x)
+fg.solve(t,F,D,G,[H[0],H[1]])
+fg.animate(f'plots/{label}.gif',clim=[-5e3,1e3],pax=dict(xlabel='x',ylabel='y'),pclb=dict(label=r'$\varphi$'))
+fg.save(f'data/{label}.npz')
+```
+
+![example_fg_p2_d2](/plots/example_fg_p2_d2.gif)
+
 ## Technical section
 
 #### Prepare python virtual environment by `poetry`
